@@ -1,0 +1,469 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<title>ChronoCare AI — Medical Timeline Platform</title>
+<link href="https://fonts.googleapis.com/css2?family=Syne:wght@400;500;600;700;800&family=Outfit:wght@300;400;500;600;700&family=JetBrains+Mono:wght@400;500&display=swap" rel="stylesheet">
+<style>
+*{margin:0;padding:0;box-sizing:border-box}
+:root{
+  --bg:#fafaf9;--sf:#ffffff;--raised:#f5f5f4;--card:#ffffff;
+  --bd:#e7e5e4;--bdL:#d6d3d1;
+  --tx:#1c1917;--tx2:#44403c;--mu:#78716c;--dm:#a8a29e;
+  --ac:#1c1917;--ac2:#292524;
+  --gn:#16a34a;--am:#d97706;--rd:#dc2626;--cy:#0891b2;--pu:#7c3aed;
+  --font-display:'Syne',sans-serif;
+  --font-body:'Outfit',sans-serif;
+  --font-mono:'JetBrains Mono',monospace;
+}
+body{background:var(--bg);color:var(--tx);font-family:var(--font-body);font-size:13px}
+button{font-family:var(--font-body);cursor:pointer}
+a{color:var(--tx);text-decoration:none}
+
+/* Subtle animations — only played once via .anim class */
+@keyframes fadeUp{from{opacity:0;transform:translateY(16px)}to{opacity:1;transform:translateY(0)}}
+@keyframes slideR{from{opacity:0;transform:translateX(-10px)}to{opacity:1;transform:translateX(0)}}
+@keyframes pulse{0%,100%{opacity:1}50%{opacity:.4}}
+@keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+.anim{animation:fadeUp .45s ease both}
+
+/* Badge */
+.badge{display:inline-flex;align-items:center;padding:2px 8px;border-radius:100px;font-size:10px;font-weight:600;letter-spacing:.3px;text-transform:uppercase;font-family:var(--font-mono);white-space:nowrap}
+
+/* Buttons */
+.btn{display:inline-flex;align-items:center;gap:6px;padding:8px 20px;border-radius:100px;font-size:12px;font-weight:600;border:1px solid;transition:all .2s;letter-spacing:.2px}
+.btn:hover{transform:translateY(-1px)}
+.btn-dark{border-color:var(--ac);background:var(--ac);color:#fff}
+.btn-dark:hover{background:var(--ac2);box-shadow:0 4px 16px rgba(0,0,0,.15)}
+.btn-outline{border-color:var(--bd);background:transparent;color:var(--tx2)}
+.btn-outline:hover{border-color:var(--bdL);background:var(--raised)}
+.btn-sm{padding:5px 14px;font-size:11px}
+
+/* Card */
+.card{background:var(--card);border:1px solid var(--bd);border-radius:16px;transition:border-color .2s}
+.card:hover{border-color:var(--bdL)}
+
+/* Header — clean minimal like Autono */
+.header{position:sticky;top:0;z-index:100;background:rgba(250,250,249,.9);backdrop-filter:blur(16px);border-bottom:1px solid var(--bd);padding:0 40px;height:60px;display:flex;align-items:center;justify-content:space-between}
+.logo-text{font-family:var(--font-display);font-size:18px;font-weight:800;letter-spacing:2px;text-transform:uppercase}
+
+/* Hero section on dashboard */
+.hero{text-align:center;padding:64px 40px 48px;max-width:640px;margin:0 auto}
+.hero h1{font-family:var(--font-display);font-size:42px;font-weight:800;letter-spacing:-1px;line-height:1.1;margin-bottom:16px;text-transform:uppercase}
+.hero p{font-size:16px;color:var(--mu);line-height:1.5;margin-bottom:28px}
+
+/* Drop zone — minimal */
+.drop{border:1.5px dashed var(--bd);border-radius:20px;padding:40px;text-align:center;background:var(--sf);cursor:pointer;transition:all .3s;max-width:560px;margin:0 auto 40px}
+.drop:hover,.drop.over{border-color:var(--ac);background:var(--raised)}
+.drop h3{font-family:var(--font-display);font-size:15px;font-weight:700;margin-bottom:4px;text-transform:uppercase;letter-spacing:.5px}
+.drop p{color:var(--dm);font-size:12px}
+
+/* KPI strip */
+.kpi-strip{display:flex;gap:1px;background:var(--bd);border-radius:16px;overflow:hidden;margin:0 auto 32px;max-width:700px}
+.kpi{flex:1;background:var(--sf);padding:20px;text-align:center}
+.kpi-val{font-family:var(--font-display);font-size:28px;font-weight:800;line-height:1}
+.kpi-label{font-size:10px;color:var(--dm);text-transform:uppercase;letter-spacing:1.5px;margin-top:4px;font-weight:500}
+
+/* Episode card */
+.ep{padding:20px 24px;border-radius:16px;transition:all .2s;cursor:default;position:relative}
+.ep.ready{cursor:pointer}
+.ep.ready:hover{transform:translateY(-2px);box-shadow:0 8px 32px rgba(0,0,0,.06)}
+
+/* Progress bar */
+.prog{display:flex;gap:3px;margin-top:8px}
+.prog div{height:3px;flex:1;border-radius:2px;background:var(--bd);transition:all .4s}
+.prog .done{background:var(--gn)}
+.prog .active{background:var(--am);animation:shimmer 1.5s infinite;background-size:200% 100%;background-image:linear-gradient(90deg,#d97706,#fbbf24,#d97706)}
+
+/* Timeline layout */
+.tl-wrap{display:flex;flex:1;overflow:hidden}
+.sidebar{width:260px;border-right:1px solid var(--bd);overflow-y:auto;flex-shrink:0;background:var(--sf)}
+.dbtn{display:block;width:calc(100% - 20px);text-align:left;margin:0 10px 6px;padding:12px 16px;border-radius:12px;border:1px solid transparent;background:transparent;color:var(--mu);transition:all .15s}
+.dbtn:hover{background:var(--raised);color:var(--tx2)}
+.dbtn.sel{background:var(--raised);border-color:var(--bd);color:var(--tx)}
+.detail{flex:1;overflow-y:auto;padding:28px 32px}
+
+/* Section */
+.sec{margin-bottom:16px;padding:20px 24px;border-radius:16px}
+.sec-head{display:flex;justify-content:space-between;align-items:center;margin-bottom:14px}
+.sec-title{font-family:var(--font-display);font-size:14px;font-weight:700;letter-spacing:.5px;text-transform:uppercase}
+
+/* Event row */
+.evt{padding:10px 8px;display:flex;align-items:flex-start;gap:12px;border-radius:8px;transition:background .1s}
+.evt:hover{background:var(--raised)}
+.evt-dot{width:8px;height:8px;border-radius:50%;margin-top:5px;flex-shrink:0}
+
+/* Cost row */
+.cost-row{padding:8px;display:flex;justify-content:space-between;align-items:center;border-radius:8px;transition:background .1s}
+.cost-row:hover{background:var(--raised)}
+.cost-bar{width:3px;height:28px;border-radius:2px;flex-shrink:0}
+
+/* Narrative */
+.narr{border-left:3px solid;padding:20px 24px;border-radius:0 16px 16px 0;background:var(--sf);margin-bottom:16px}
+
+/* Alert */
+.alert{padding:12px 20px;border-radius:12px;font-size:12px;margin-bottom:16px;display:none}
+.alert.show{display:flex;align-items:center;gap:8px}
+.alert-err{background:#fef2f2;border:1px solid #fecaca;color:var(--rd)}
+.alert-ok{background:#f0fdf4;border:1px solid #bbf7d0;color:var(--gn)}
+
+/* Scrollbar */
+::-webkit-scrollbar{width:5px}
+::-webkit-scrollbar-track{background:transparent}
+::-webkit-scrollbar-thumb{background:var(--bd);border-radius:3px}
+
+#file-input{display:none}
+
+/* Status indicators */
+.status-dot{width:8px;height:8px;border-radius:50%;display:inline-block}
+.status-dot.ready{background:var(--gn)}
+.status-dot.processing{background:var(--am);animation:pulse 1.5s infinite}
+.status-dot.error{background:var(--rd)}
+
+.grid2{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+
+/* Divider */
+.divider{height:1px;background:var(--bd);margin:8px 0}
+</style>
+</head>
+<body>
+<div id="app"></div>
+<script>
+const API=window.location.origin;
+const fmt=n=>typeof n==='number'?n.toLocaleString('en-US',{minimumFractionDigits:2,maximumFractionDigits:2}):'0.00';
+const EC={diagnosis:'#dc2626',procedure:'#0891b2',imaging:'#7c3aed',test:'#4f46e5',lab_result:'#4f46e5',medication:'#16a34a',admission:'#d97706',discharge:'#ea580c',ambulance_intervention:'#ea580c',assessment:'#78716c',referral:'#a21caf',therapy:'#0d9488',room:'#78716c',emergency:'#dc2626',surgery:'#dc2626',consultation:'#7c3aed',transfer:'#d97706',other:'#a8a29e'};
+const CC={surgery:'#dc2626',room:'#2563eb',supply:'#7c3aed',imaging:'#9333ea',procedure:'#0891b2',emergency:'#d97706',anesthesia:'#db2777',ambulance:'#ea580c',lab:'#059669',therapy:'#0d9488',medication:'#16a34a',professional_fee:'#4f46e5',test:'#0891b2',other:'#78716c'};
+const SC={critical:'#dc2626',high:'#ea580c',medium:'#d97706',low:'#0891b2',info:'#78716c'};
+const STEPS={agent1:'Classifying documents',agent2:'Extracting events & costs',agent3:'Building timeline',agent4:'Running QA audit',agent5:'Generating narratives'};
+
+function badge(t,c='#1c1917'){return `<span class="badge" style="background:${c}10;color:${c};border:1px solid ${c}20">${t}</span>`;}
+
+let S={view:'dash',episodes:[],selId:null,selDate:null,epData:null,alert:null,rendered:false};
+let poll=null;
+
+// ═══ API ═══
+async function fetchEpisodes(){
+  try{
+    const r=await fetch(API+'/api/episodes');
+    if(r.ok){
+      const data=await r.json();
+      const changed=JSON.stringify(data)!==JSON.stringify(S.episodes);
+      S.episodes=data;
+      // ONLY re-render dashboard if data actually changed, and NEVER re-render episode view from polling
+      if(S.view==='dash'&&changed)renderDash();
+    }
+  }catch(e){}
+}
+
+async function uploadFiles(fl){
+  const files=Array.from(fl);
+  const pdfs=files.filter(f=>f.name.toLowerCase().endsWith('.pdf'));
+  if(!pdfs.length){S.alert={type:'err',msg:'No PDF files found. You uploaded: '+files.map(f=>f.name).join(', ')};renderDash();return;}
+  S.alert={type:'ok',msg:'Uploading '+pdfs.length+' PDF'+(pdfs.length>1?'s':'')+'...'};renderDash();
+  const form=new FormData();pdfs.forEach(f=>form.append('files',f));
+  try{const r=await fetch(API+'/api/upload',{method:'POST',body:form});const d=await r.json();
+    if(!r.ok){S.alert={type:'err',msg:d.detail||'Upload failed'};renderDash();return;}
+    S.alert={type:'ok',msg:'Processing '+d.files+' PDF'+(d.files>1?'s':'')+'...'};fetchEpisodes();
+  }catch(e){S.alert={type:'err',msg:'Cannot reach server.'};renderDash();}
+}
+
+async function openEp(id){
+  S.selId=id;S.view='ep';S.selDate=null;S.epData=null;renderEp();
+  try{const r=await fetch(API+'/api/episodes/'+id);if(r.ok){S.epData=await r.json();
+    if(S.epData.timeline){const d=Object.keys(S.epData.timeline.timeline||{}).sort();S.selDate=d[0]||null;}
+    renderEp();}}catch(e){}
+}
+
+async function deleteEp(id,ev){ev.stopPropagation();await fetch(API+'/api/episodes/'+id,{method:'DELETE'});fetchEpisodes();}
+
+// ═══ DASHBOARD ═══
+function renderDash(){
+  const a=document.getElementById('app');
+  const ready=S.episodes.filter(e=>e.status==='ready');
+  const totalCost=ready.reduce((s,e)=>s+(e.total_cost||0),0);
+  const avgTime=ready.length?Math.round(ready.reduce((s,e)=>s+(e.processing_time||0),0)/ready.length):0;
+
+  let h=`
+  <div class="header">
+    <div class="logo-text">ChronoCare AI</div>
+    <nav style="display:flex;align-items:center;gap:24px">
+      <span style="font-size:13px;color:var(--mu);font-weight:500">Platform</span>
+      <span style="font-size:13px;color:var(--mu);font-weight:500">About</span>
+      <a href="https://portfolio-fo6c.onrender.com/" target="_blank" style="font-size:13px;color:var(--mu);font-weight:500;text-decoration:none">Author</a>
+      <button class="btn btn-dark btn-sm" onclick="document.getElementById('file-input').click()">New Analysis</button>
+    </nav>
+  </div>
+
+  <div class="hero">
+    <h1>Medical Claims<br>Timeline Platform</h1>
+    <p>Upload patient documents. Our multi-agent AI builds audit-ready timelines with clinical narratives, cost analysis, and quality flags — in minutes, not hours.</p>
+
+    <div class="drop" id="dropzone">
+      <input type="file" id="file-input" multiple accept=".pdf">
+      <div style="font-size:28px;margin-bottom:10px;opacity:.4">&#8593;</div>
+      <h3>Drop PDFs to begin</h3>
+      <p>Ambulance, ER, operative, progress notes, labs, billing</p>
+    </div>
+  </div>
+
+  <div style="max-width:880px;margin:0 auto;padding:0 24px 48px">
+
+    <div id="alert" class="alert ${S.alert?'show':''} ${S.alert?.type==='err'?'alert-err':'alert-ok'}">
+      ${S.alert?.msg||''}
+    </div>
+
+    ${ready.length>0?`
+    <div class="kpi-strip">
+      <div class="kpi"><div class="kpi-val">${ready.length}</div><div class="kpi-label">Analyses</div></div>
+      <div class="kpi"><div class="kpi-val">$${(totalCost/1000).toFixed(0)}k</div><div class="kpi-label">Audited</div></div>
+      <div class="kpi"><div class="kpi-val">${avgTime}s</div><div class="kpi-label">Avg Time</div></div>
+      <div class="kpi"><div class="kpi-val">${ready.length?Math.round(ready.filter(e=>(e.total_findings||0)<=3).length/ready.length*100):0}%</div><div class="kpi-label">Clean Rate</div></div>
+    </div>`:''}
+
+    ${S.episodes.length?`<div style="font-family:var(--font-display);font-size:12px;color:var(--dm);text-transform:uppercase;letter-spacing:2px;margin-bottom:14px;font-weight:600">Recent Analyses</div>`:''}
+
+    <div style="display:flex;flex-direction:column;gap:10px">`;
+
+  S.episodes.forEach(ep=>{
+    const step=STEPS[ep.current_step]||'';
+    const created=ep.created_at?new Date(ep.created_at).toLocaleString():'';
+
+    h+=`<div class="card ep ${ep.status}" onclick="${ep.status==='ready'?`openEp('${ep.id}')`:''}">
+      <div style="display:flex;justify-content:space-between;align-items:flex-start">
+        <div style="flex:1">
+          <div style="display:flex;align-items:center;gap:10px;margin-bottom:6px">
+            <span class="status-dot ${ep.status}"></span>
+            <span style="font-family:var(--font-display);font-size:16px;font-weight:700;letter-spacing:-.3px">${ep.patient_name||('Analysis — '+ep.pdf_count+' PDF'+(ep.pdf_count!==1?'s':''))}</span>
+            ${ep.status==='processing'?badge(step,'#d97706'):''}
+          </div>
+          <div style="font-size:12px;color:var(--dm);display:flex;gap:16px;flex-wrap:wrap">
+            <span>${created}</span>
+            ${ep.episode_start?`<span>${ep.episode_start} → ${ep.episode_end}</span>`:''}
+            ${ep.duration_days!=null?`<span>${ep.duration_days+1} days</span>`:''}
+            ${ep.pdf_count?`<span>${ep.pdf_count} documents</span>`:''}
+            ${ep.processing_time?`<span>${ep.processing_time}s</span>`:''}
+          </div>
+          ${ep.status==='processing'?`<div class="prog">${['agent1','agent2','agent3','agent4','agent5'].map(a=>`<div class="${ep[a+'_complete']?'done':ep.current_step===a?'active':''}"></div>`).join('')}</div>`:''}
+          ${ep.error?`<div style="font-size:11px;color:var(--rd);margin-top:6px">${ep.error}</div>`:''}
+        </div>
+        ${ep.status==='ready'?`<div style="text-align:right">
+          <div style="font-family:var(--font-display);font-size:24px;font-weight:800;letter-spacing:-1px">$${((ep.total_cost||0)/1000).toFixed(1)}k</div>
+          <div style="display:flex;gap:4px;margin-top:4px;justify-content:flex-end">
+            ${badge('Risk '+(ep.risk_score||0),(ep.risk_score||0)>=40?'#d97706':'#16a34a')}
+            ${badge((ep.total_events||0)+' events','#0891b2')}
+          </div>
+          <div style="display:flex;gap:6px;margin-top:8px;justify-content:flex-end">
+            <button class="btn btn-outline btn-sm" onclick="event.stopPropagation();window.open('${API}/api/episodes/${ep.id}/csv')">CSV</button>
+            <button class="btn btn-sm" style="border-color:#fecaca;color:var(--rd);background:#fef2f2" onclick="deleteEp('${ep.id}',event)">Delete</button>
+          </div>
+        </div>`:''}
+        ${ep.status==='error'?`<button class="btn btn-sm" style="border-color:#fecaca;color:var(--rd);background:#fef2f2" onclick="deleteEp('${ep.id}',event)">Delete</button>`:''}
+      </div>
+    </div>`;
+  });
+
+  h+=`</div></div>`;
+  a.innerHTML=h;
+
+  // Wire drop zone
+  const dz=document.getElementById('dropzone'),fi=document.getElementById('file-input');
+  if(dz&&fi){
+    dz.onclick=()=>fi.click();
+    fi.onchange=e=>uploadFiles(e.target.files);
+    dz.ondragover=e=>{e.preventDefault();dz.classList.add('over');};
+    dz.ondragleave=()=>dz.classList.remove('over');
+    dz.ondrop=e=>{e.preventDefault();dz.classList.remove('over');uploadFiles(e.dataTransfer.files);};
+  }
+}
+
+// ═══ EPISODE VIEW ═══
+function renderEp(){
+  const a=document.getElementById('app');const d=S.epData;
+  if(!d||!d.timeline){
+    a.innerHTML=`<div class="header">
+      <div style="display:flex;align-items:center;gap:16px">
+        <button class="btn btn-outline btn-sm" onclick="S.view='dash';S.epData=null;renderDash()">← Back</button>
+        <span class="logo-text">ChronoCare AI</span>
+      </div>
+    </div>
+    <div style="padding:80px;text-align:center">
+      ${d&&d.error?`<div style="color:var(--rd);font-family:var(--font-display);font-size:18px;margin-bottom:8px">Error</div><div style="font-size:12px;color:var(--mu);max-width:500px;margin:0 auto">${d.error}</div>`:'<div style="font-size:13px;color:var(--dm)">Loading analysis...</div>'}
+    </div>`;return;
+  }
+
+  const tl=d.timeline,qa=d.qa_report||{},narr=d.narrative||{},pt=tl.patient||{},ep=tl.episode||{},tm=tl.timeline||{};
+  const dates=Object.keys(tm).sort(),cur=S.selDate||dates[0]||'',entry=tm[cur]||{};
+  const events=entry.events||[],costs=entry.cost_items||[],findings=qa.all_findings||[];
+  const sections=narr.sections||{};
+  const dateNarr=(sections.IV_clinical_timeline||sections.date_narratives||{})[cur];
+  const fbd={};findings.forEach(f=>{if(f.affected_date)fbd[f.affected_date]=(fbd[f.affected_date]||0)+1;});
+
+  let h=`
+  <!-- Header -->
+  <div class="header">
+    <div style="display:flex;align-items:center;gap:16px">
+      <button class="btn btn-outline btn-sm" onclick="S.view='dash';S.epData=null;renderDash()">←</button>
+      <div>
+        <div style="font-family:var(--font-display);font-size:15px;font-weight:700;letter-spacing:.5px;text-transform:uppercase">${pt.name||'Patient'}</div>
+        <div style="font-size:11px;color:var(--dm)">${ep.start_date||''} → ${ep.end_date||''} · $${fmt(ep.total_cost||0)}</div>
+      </div>
+    </div>
+    <div style="display:flex;gap:8px">
+      <button class="btn btn-dark btn-sm" onclick="window.open('${API}/api/episodes/${S.selId}/csv')">Export CSV</button>
+      <button class="btn btn-outline btn-sm" onclick="window.open('${API}/api/episodes/${S.selId}/pdf')">PDF Report</button>
+      <button class="btn btn-outline btn-sm" onclick="copyAll()">Copy</button>
+      <button class="btn btn-outline btn-sm" onclick="emailReport()">Email</button>
+    </div>
+  </div>
+
+  <!-- Episode summary strip -->
+  <div style="display:flex;gap:1px;background:var(--bd);border-bottom:1px solid var(--bd)">
+    ${[
+      {v:ep.total_events||0,l:'Events'},
+      {v:'$'+((ep.total_cost||0)/1000).toFixed(1)+'k',l:'Charges'},
+      {v:(qa.risk_score||0)+'/100',l:'Risk Score'},
+      {v:qa.total_findings||0,l:'Findings'},
+      {v:dates.length,l:'Days'},
+      {v:(ep.duration_days||0)+1+'d',l:'Length of Stay'},
+    ].map(k=>`<div style="flex:1;background:var(--sf);padding:14px;text-align:center">
+      <div style="font-family:var(--font-display);font-size:20px;font-weight:800">${k.v}</div>
+      <div style="font-size:9px;color:var(--dm);text-transform:uppercase;letter-spacing:1.5px;margin-top:2px">${k.l}</div>
+    </div>`).join('')}
+  </div>
+
+  <div class="tl-wrap" style="height:calc(100vh - 60px - 64px)">
+    <!-- SIDEBAR -->
+    <div class="sidebar">
+      <div style="padding:16px 16px 10px;font-family:var(--font-display);font-size:12px;font-weight:700;text-transform:uppercase;letter-spacing:1.5px;color:var(--dm)">Timeline</div>`;
+
+  dates.forEach((d,i)=>{
+    const dy=tm[d];const sel=d===cur;const flags=fbd[d]||0;
+    h+=`<button class="dbtn ${sel?'sel':''}" onclick="S.selDate='${d}';renderEp()">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span style="font-family:var(--font-display);font-size:13px;font-weight:${sel?700:500}">${d.slice(5)}</span>
+        <div style="display:flex;gap:4px;align-items:center">
+          ${flags>0?'<span style="width:6px;height:6px;border-radius:50%;background:var(--am);display:inline-block"></span>':''}
+          <span style="font-size:10px;color:var(--dm)">Day ${i+1}</span>
+        </div>
+      </div>
+      <div style="font-size:11px;color:var(--dm);margin-top:3px">${dy?.event_count||0} events · $${((dy?.total_cost||0)/1000).toFixed(1)}k${flags?' · '+flags+' flags':''}</div>
+    </button>`;
+  });
+
+  h+=`</div>
+
+    <!-- DETAIL -->
+    <div class="detail">
+      <!-- Date header -->
+      <div style="display:flex;justify-content:space-between;align-items:baseline;margin-bottom:20px">
+        <div>
+          <div style="font-family:var(--font-display);font-size:24px;font-weight:800;letter-spacing:-1px">${cur}</div>
+          <div style="font-size:12px;color:var(--dm);margin-top:2px">Day ${dates.indexOf(cur)+1} · ${events.length} events · ${costs.length} charges · $${fmt(entry.total_cost||0)}</div>
+        </div>
+        <div style="display:flex;gap:6px">${(entry.source_documents||[]).slice(0,3).map(doc=>`<span style="font-size:9px;padding:3px 10px;border-radius:100px;border:1px solid var(--bd);color:var(--dm)">${doc.replace('.pdf','').slice(0,20)}</span>`).join('')}</div>
+      </div>`;
+
+  // Narrative
+  if(dateNarr){
+    h+=`<div class="card narr" style="border-left-color:var(--pu)">
+      <div style="font-size:10px;color:var(--pu);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-bottom:8px;font-family:var(--font-mono)">Clinical Narrative</div>
+      <div style="font-size:13px;line-height:1.7;color:var(--tx2)">${dateNarr}</div>
+    </div>`;
+  }
+
+  // Events
+  h+=`<div class="card sec">
+    <div class="sec-head"><div class="sec-title">Clinical Events</div><span style="font-family:var(--font-mono);font-size:11px;color:var(--dm)">${events.length}</span></div>`;
+  events.slice(0,30).forEach((evt,i)=>{
+    const col=EC[evt.event_type]||'#78716c';
+    const icds=(evt.icd_codes||[]).map(c=>badge(c,'#dc2626')).join(' ');
+    const cpts=(evt.cpt_codes||[]).map(c=>badge('CPT '+c,'#0891b2')).join(' ');
+    h+=`<div class="evt" style="${i<Math.min(events.length,30)-1?'border-bottom:1px solid var(--bd)':''}">
+      <div class="evt-dot" style="background:${col}"></div>
+      <div style="flex:1">
+        <div style="display:flex;gap:4px;flex-wrap:wrap;margin-bottom:2px">
+          <span style="font-family:var(--font-mono);font-size:9px;font-weight:600;color:${col};text-transform:uppercase;letter-spacing:.5px">${evt.event_type||''}</span> ${icds} ${cpts}
+        </div>
+        <div style="font-size:13px;line-height:1.45;color:var(--tx2)">${evt.description||''}</div>
+        ${(evt.providers||[]).filter(Boolean).length?`<div style="font-size:11px;color:var(--dm);margin-top:1px">${evt.providers.join(', ')}</div>`:''}
+        ${(evt.source_segments||[]).length>1?`<div style="font-size:10px;color:var(--pu);margin-top:1px">Corroborated in ${evt.source_segments.length} documents</div>`:''}
+      </div>
+    </div>`;
+  });
+  if(events.length>30)h+=`<div style="font-size:11px;color:var(--dm);padding:12px;text-align:center">+${events.length-30} more</div>`;
+  if(!events.length)h+=`<div style="color:var(--dm);padding:28px;text-align:center">No events</div>`;
+  h+=`</div>`;
+
+  // Costs
+  h+=`<div class="card sec">
+    <div class="sec-head"><div class="sec-title">Charges</div><span style="font-family:var(--font-display);font-size:18px;font-weight:800">$${fmt(entry.total_cost||0)}</span></div>`;
+  costs.forEach((co,i)=>{
+    h+=`<div class="cost-row" style="${i<costs.length-1?'border-bottom:1px solid var(--bd)':''}">
+      <div style="display:flex;align-items:center;gap:12px">
+        <div class="cost-bar" style="background:${CC[co.category]||'#78716c'}"></div>
+        <div>
+          <div style="font-size:13px;color:var(--tx2)">${co.description||''}</div>
+          <div style="font-size:10px;color:var(--dm)">${co.category||''}${co.code?' · '+co.code:''}${co.linked_event_id?' → <span style="color:var(--cy)">'+co.linked_event_id+'</span>':''}</div>
+        </div>
+      </div>
+      <div style="font-family:var(--font-mono);font-size:13px;font-weight:600">$${(co.amount||0).toLocaleString()}</div>
+    </div>`;
+  });
+  if(!costs.length)h+=`<div style="color:var(--dm);padding:28px;text-align:center">No charges</div>`;
+  h+=`</div>`;
+
+  // QA + Sources
+  const dateFn=findings.filter(f=>!f.affected_date||f.affected_date===cur);
+  h+=`<div class="grid2">
+    <div class="card sec">
+      <div class="sec-title" style="margin-bottom:12px">QA Flags (${dateFn.length})</div>`;
+  dateFn.slice(0,8).forEach(f=>{
+    h+=`<div style="padding:6px 0;border-bottom:1px solid var(--bd);display:flex;gap:8px;align-items:flex-start">
+      ${badge(f.severity,SC[f.severity]||'#78716c')}
+      <div style="font-size:12px;color:var(--tx2)">${f.title||''}</div>
+    </div>`;
+  });
+  if(!dateFn.length)h+=`<div style="color:var(--gn);font-size:12px;padding:8px 0">&#10003; No flags</div>`;
+  h+=`</div>
+    <div class="card sec">
+      <div class="sec-title" style="margin-bottom:12px">Sources</div>`;
+  (entry.source_documents||[]).forEach(doc=>{h+=`<div style="padding:4px 0;font-size:12px;color:var(--mu)">&#128196; ${doc}</div>`;});
+  const provs=[...new Set(events.flatMap(e=>(e.providers||[]).filter(Boolean)))];
+  if(provs.length){h+=`<div class="divider"></div>`;
+    provs.forEach(p=>{h+=`<div style="font-size:12px;color:var(--mu);padding:2px 0">&#128100; ${p}</div>`;});}
+  h+=`</div></div>`;
+
+  // Executive Summary
+  const exec=sections.I_executive_summary||sections.executive_summary;
+  if(exec){h+=`<div class="card narr" style="border-left-color:var(--ac)">
+    <div style="font-size:10px;color:var(--ac);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-bottom:8px;font-family:var(--font-mono)">Executive Summary</div>
+    <div style="font-size:13px;line-height:1.7;color:var(--tx2)">${exec}</div>
+  </div>`;}
+
+  // Audit Assessment
+  const qaNarr=sections.II_audit_findings||sections.qa_narrative;
+  if(qaNarr){h+=`<div class="card narr" style="border-left-color:var(--am)">
+    <div style="font-size:10px;color:var(--am);text-transform:uppercase;letter-spacing:1.5px;font-weight:600;margin-bottom:8px;font-family:var(--font-mono)">Audit Assessment — Risk ${qa.risk_score||0}/100</div>
+    <div style="font-size:13px;line-height:1.7;color:var(--tx2)">${qaNarr}</div>
+  </div>`;}
+
+  h+=`</div></div>`;
+  a.innerHTML=h;
+}
+
+// ═══ ACTIONS ═══
+function copyAll(){if(!S.epData)return;navigator.clipboard.writeText(JSON.stringify(S.epData,null,2));}
+function emailReport(){
+  if(!S.epData)return;const tl=S.epData.timeline||{};const p=tl.patient||{};const ep=tl.episode||{};const qa=S.epData.qa_report||{};
+  const sec=(S.epData.narrative||{}).sections||{};
+  window.open('mailto:?subject='+encodeURIComponent('ChronoCare: '+(p.name||'Patient')+' - Risk '+(qa.risk_score||0)+'/100')+'&body='+encodeURIComponent('Patient: '+p.name+'\n'+(ep.start_date||'')+' to '+(ep.end_date||'')+'\n$'+fmt(ep.total_cost||0)+'\nRisk: '+(qa.risk_score||0)+'/100\n\n'+(sec.I_executive_summary||sec.executive_summary||'')));
+}
+
+// ═══ BOOT ═══
+fetchEpisodes();
+renderDash();
+poll=setInterval(fetchEpisodes,3000);
+</script>
+</body>
+</html>
