@@ -149,6 +149,7 @@ async function fetchEpisodes(){
     if(r.ok){
       const data=await r.json();
       const changed=JSON.stringify(data)!==JSON.stringify(S.episodes);
+      if(!data||!Array.isArray(data)||(data.length===0&&S.episodes.length>0))return;
       S.episodes=data;
       // ONLY re-render dashboard if data actually changed, and NEVER re-render episode view from polling
       if(S.view==='dash'&&changed)renderDash();
